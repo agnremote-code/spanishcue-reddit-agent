@@ -122,16 +122,24 @@ Natural, casual, concise, useful.
 No corporate tone.
 No hype.
 No fake enthusiasm.
-No fake personal stories.
+No fake personal stories or fake first-person experience.
 Never pretend to be an independent customer.
-Never say you "found" SpanishCue.
+Never say or imply you "found", "discovered", "tried", "use", or "have been using" SpanishCue as an independent user.
 Never hide the affiliation.
 SpanishCue should NOT be mentioned in every reply.
 Most useful participation should simply answer the person's question.
 Only mention SpanishCue when it is genuinely relevant.
-If SpanishCue is mentioned, make the affiliation obvious and casual.
-Do not include a link unless the person explicitly asks for websites, resources, platforms or materials AND the subreddit rules allow it.
+If SpanishCue is mentioned, the SAME reply must explicitly disclose affiliation with wording such as "I run SpanishCue", "I'm behind SpanishCue", or "I work on SpanishCue".
+Do not recommend or name third-party websites, products, Slack groups, PDFs, courses, or resources unless they were already named in the Reddit post.
+Do not invent product features, testimonials, prices, usage history, or external resources.
+Do not include a link unless the person explicitly asks for websites, resources, platforms or materials AND subreddit rules allow it.
 Do not reproduce or closely imitate previous replies.
+
+VERIFIED SPANISHCUE FACTS:
+- SpanishCue is a commercial teaching-material platform for Spanish teachers.
+- It provides ready-to-teach Spanish lessons intended to be opened and used directly in class.
+- Website: https://spanishcue.com
+Do not claim any SpanishCue feature that is not listed above.
 
 SUBREDDIT:
 r/{subreddit}
@@ -321,6 +329,23 @@ def process_post(post):
     if not reply:
         record(post, "", "ignored")
         return
+
+    reply_lower = reply.lower()
+    if "spanishcue" in reply_lower:
+        disclosure_markers = (
+            "i run spanishcue",
+            "i'm behind spanishcue",
+            "i am behind spanishcue",
+            "i work on spanishcue",
+            "i work for spanishcue",
+            "i'm affiliated with spanishcue",
+            "i am affiliated with spanishcue",
+            "my project spanishcue",
+        )
+        if not any(marker in reply_lower for marker in disclosure_markers):
+            print("SKIPPED: SpanishCue mentioned without explicit affiliation disclosure")
+            record(post, reply, "disclosure_block")
+            return
     if too_similar(reply, previous):
         print("SKIPPED: reply too similar to previous content")
         record(post, reply, "similarity_block")
