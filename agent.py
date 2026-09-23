@@ -382,21 +382,56 @@ def run():
 
 
 def self_test():
-    result = evaluate_post(
-        subreddit="SpanishTeachers",
-        title="What do you use when you have no time to prep a conversation class?",
-        body=(
-            "I teach Spanish online and I'm spending way too much time "
-            "making materials for B1/B2 students. Looking for things I can "
-            "actually open and use during class without rebuilding everything."
-        ),
-        rules_text=(
-            "No spam. Self-promotion must be relevant to the discussion "
-            "and affiliation must be disclosed."
-        ),
-        previous=[],
-    )
-    print(json.dumps(result, indent=2, ensure_ascii=False))
+    tests = [
+        {
+            "name": "relevant_spanish_teacher",
+            "subreddit": "SpanishTeachers",
+            "title": "What do you use when you have no time to prep a conversation class?",
+            "body": (
+                "I teach Spanish online and I'm spending way too much time "
+                "making materials for B1/B2 students. Looking for things I can "
+                "actually open and use during class without rebuilding everything."
+            ),
+            "rules": (
+                "No spam. Self-promotion must be relevant to the discussion "
+                "and affiliation must be disclosed."
+            ),
+        },
+        {
+            "name": "spanish_learner_not_teacher",
+            "subreddit": "Spanish",
+            "title": "How can I improve my Spanish listening?",
+            "body": "I'm a learner around B1 and I want podcasts or videos to practice with.",
+            "rules": "No spam or self-promotion.",
+        },
+        {
+            "name": "generic_preply_complaint",
+            "subreddit": "Preply",
+            "title": "Why did my lesson get cancelled?",
+            "body": "My tutor cancelled at the last minute and support hasn't replied yet.",
+            "rules": "Keep posts related to Preply. No spam.",
+        },
+        {
+            "name": "teacher_but_spanishcue_not_needed",
+            "subreddit": "SpanishTeachers",
+            "title": "How do you handle a student who keeps arriving 15 minutes late?",
+            "body": "I teach Spanish online and this keeps happening with one adult student.",
+            "rules": "No spam. Relevant self-promotion only.",
+        },
+    ]
+
+    outputs = []
+    for test in tests:
+        result = evaluate_post(
+            subreddit=test["subreddit"],
+            title=test["title"],
+            body=test["body"],
+            rules_text=test["rules"],
+            previous=[],
+        )
+        outputs.append({"test": test["name"], **result})
+
+    print(json.dumps(outputs, indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":
