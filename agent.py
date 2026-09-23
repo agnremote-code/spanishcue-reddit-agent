@@ -119,10 +119,14 @@ DO NOT engage with:
 STYLE:
 Write like a normal Reddit user.
 Natural, casual, concise, useful.
+Keep replies between 25 and 80 words unless the post clearly needs a little more context.
+Prefer 1 to 3 short paragraphs.
 No corporate tone.
 No hype.
 No fake enthusiasm.
 No fake personal stories or fake first-person experience.
+Avoid canned phrases like "Hope that helps", "A common approach is", "The key is", or "Consider".
+Do not sound like a teacher-training manual or customer-support bot.
 Never pretend to be an independent customer.
 Never say or imply you "found", "discovered", "tried", "use", or "have been using" SpanishCue as an independent user.
 Never hide the affiliation.
@@ -328,6 +332,12 @@ def process_post(post):
     reply = result.get("reply", "").strip()
     if not reply:
         record(post, "", "ignored")
+        return
+
+    word_count = len(reply.split())
+    if word_count > 100:
+        print("SKIPPED: reply too long")
+        record(post, reply, "length_block")
         return
 
     reply_lower = reply.lower()
