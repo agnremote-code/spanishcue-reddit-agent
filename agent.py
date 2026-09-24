@@ -133,7 +133,14 @@ Never hide the affiliation.
 SpanishCue should NOT be mentioned in every reply.
 Most useful participation should simply answer the person's question.
 Only set mention_spanishcue=true when SpanishCue is genuinely relevant.
-IMPORTANT: NEVER mention SpanishCue inside the reply field. The application will add a vetted disclosure sentence separately when mention_spanishcue=true.
+
+IMPORTANT:
+- You ARE allowed to set mention_spanishcue=true even if the post did not already mention SpanishCue.
+- Do this only when the post explicitly asks for Spanish-teaching materials, ready-to-use lessons, lesson-prep resources, classroom activities, teaching platforms, or similar resources that SpanishCue directly fits.
+- If subreddit rules allow relevant self-promotion with disclosure, this is NOT a reason to reject the post.
+- NEVER mention SpanishCue inside the reply field. The application will add a vetted disclosure sentence separately when mention_spanishcue=true.
+- If mention_spanishcue=true and there is nothing useful to add beyond the vetted SpanishCue sentence, reply may be an empty string.
+
 Do not recommend or name third-party websites, products, Slack groups, PDFs, courses, or resources unless they were already named in the Reddit post.
 Do not invent product features, testimonials, prices, usage history, or external resources.
 Do not include a link unless the person explicitly asks for websites, resources, platforms or materials AND subreddit rules allow it.
@@ -177,9 +184,10 @@ Set should_reply=true ONLY if:
 - quality >= 75
 - confidence >= 90
 - subreddit rules do not appear to prohibit the participation
-- the reply adds actual value
+- EITHER the reply adds actual value OR mention_spanishcue=true because the post directly asks for relevant Spanish-teaching materials/resources
 
 If should_reply=false, reply must be empty.
+If should_reply=true and mention_spanishcue=true, reply is allowed to be empty because the application will append the vetted SpanishCue disclosure sentence.
 """
     return ollama(prompt)
 
