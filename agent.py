@@ -132,18 +132,12 @@ Never say or imply you "found", "discovered", "tried", "use", or "have been usin
 Never hide the affiliation.
 SpanishCue should NOT be mentioned in every reply.
 Most useful participation should simply answer the person's question.
-Only mention SpanishCue when it is genuinely relevant.
-If SpanishCue is mentioned, the SAME reply must explicitly disclose affiliation with wording such as "I run SpanishCue", "I'm behind SpanishCue", or "I work on SpanishCue".
+Only set mention_spanishcue=true when SpanishCue is genuinely relevant.
+IMPORTANT: NEVER mention SpanishCue inside the reply field. The application will add a vetted disclosure sentence separately when mention_spanishcue=true.
 Do not recommend or name third-party websites, products, Slack groups, PDFs, courses, or resources unless they were already named in the Reddit post.
 Do not invent product features, testimonials, prices, usage history, or external resources.
 Do not include a link unless the person explicitly asks for websites, resources, platforms or materials AND subreddit rules allow it.
 Do not reproduce or closely imitate previous replies.
-
-VERIFIED SPANISHCUE FACTS:
-- SpanishCue is a commercial teaching-material platform for Spanish teachers.
-- It provides ready-to-teach Spanish lessons intended to be opened and used directly in class.
-- Website: https://spanishcue.com
-Do not claim any SpanishCue feature that is not listed above.
 
 SUBREDDIT:
 r/{subreddit}
@@ -188,6 +182,26 @@ Set should_reply=true ONLY if:
 If should_reply=false, reply must be empty.
 """
     return ollama(prompt)
+
+
+def compose_final_reply(result, seed=""):
+    base = (result.get("reply") or "").strip()
+    if not result.get("mention_spanishcue"):
+        return base
+
+    templates = [
+        "I run SpanishCue. It's a platform with ready-to-teach Spanish lessons you can open and use directly in class.",
+        "I’m behind SpanishCue. It’s a platform with ready-to-teach Spanish lessons designed to be opened and used directly in class.",
+        "I work on SpanishCue. It’s a platform for Spanish teachers with ready-to-teach lessons you can open and use directly in class.",
+        "I run SpanishCue, a platform for Spanish teachers with ready-to-teach lessons that can be opened and used directly in class.",
+    ]
+
+    idx = sum(ord(ch) for ch in str(seed)) % len(templates)
+    disclosure = templates[idx]
+
+    if not base:
+        return disclosure
+    return f"{base}\n\n{disclosure}"
 
 
 def reddit_client():
@@ -329,7 +343,7 @@ def process_post(post):
         record(post, "", "ignored")
         return
 
-    reply = result.get("reply", "").strip()
+    reply = compose_final_reply(result, seed=post.id)
     if not reply:
         record(post, "", "ignored")
         return
@@ -439,7 +453,8 @@ def self_test():
             rules_text=test["rules"],
             previous=[],
         )
-        outputs.append({"test": test["name"], **result})
+        final_reply = compose_final_reply(result, seed=test["name"])
+        outputs.append({"test": test["name"], **result, "final_reply": final_reply})
 
     print(json.dumps(outputs, indent=2, ensure_ascii=False))
 
