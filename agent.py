@@ -18,6 +18,8 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "alejandro:latest")
 DRY_RUN = os.getenv("DRY_RUN", "true").lower() == "true"
 MAX_COMMENTS_PER_DAY = int(os.getenv("MAX_COMMENTS_PER_DAY", "3"))
 MIN_HOURS_BETWEEN_COMMENTS = float(os.getenv("MIN_HOURS_BETWEEN_COMMENTS", "4"))
+POST_AGE_HOURS = int(os.getenv("POST_AGE_HOURS", "72"))
+SCAN_LIMIT = int(os.getenv("SCAN_LIMIT", "60"))
 SUBREDDITS = [
     x.strip()
     for x in os.getenv("SUBREDDITS", "SpanishTeachers,Preply,iTalki,Cambly").split(",")
@@ -319,7 +321,7 @@ def process_post(post):
         return
 
     age_hours = (time.time() - post.created_utc) / 3600
-    if age_hours > 72:
+    if age_hours > POST_AGE_HOURS:
         return
 
     rules = subreddit_rules(post.subreddit)
@@ -406,11 +408,53 @@ def run():
     print("DRY_RUN:", DRY_RUN)
 
     multi = reddit.subreddit("+".join(SUBREDDITS))
-    for post in multi.new(limit=60):
+    for post in multi.new(limit=SCAN_LIMIT):
         try:
             process_post(post)
         except Exception as exc:
             print(f"ERROR on {getattr(post, 'id', '?')}: {exc}")
+
+
+def preflight():
+    print("Ollama URL:", OLLAMA_URL)
+    print("Ollama model:", OLLAMA_MODEL)
+    print("Dry run:", DRY_RUN)
+    print("Subreddits:", ", ".join(SUBREDDITS))
+
+    response = requests.get(f"{OLLAMA_URL}/api/tags", timeout=10)
+    response.raise_for_status()
+    models = [item.get("name") for item in response.json().get("models", [])]
+    if OLLAMA_MODEL not in models:
+        raise RuntimeError(f"Ollama model not found: {OLLAMA_MODEL}")
+    print("Ollama: OK")
+
+    required = ["REDDIT_CLIENT_ID", "REDDIT_CLIENT_SECRET", "REDDIT_REFRESH_TOKEN"]
+    missing = [name for name in required if not os.getenv(name)]
+    if missing:
+        print("Reddit credentials: WAITING (" + ", ".join(missing) + ")")
+        return
+
+    reddit = reddit_client()
+    print("Reddit login:", reddit.user.me())
+    print("Reddit credentials: OK")
+
+
+def local_status():
+    con = db()
+    total = con.execute("SELECT COUNT(*) FROM interactions").fetchone()[0]
+    posted = con.execute(
+        "SELECT COUNT(*) FROM interactions WHERE status = 'posted'"
+    ).fetchone()[0]
+    ignored = con.execute(
+        "SELECT COUNT(*) FROM interactions WHERE status = 'ignored'"
+    ).fetchone()[0]
+    con.close()
+
+    print("Interactions:", total)
+    print("Posted:", posted)
+    print("Ignored:", ignored)
+    print("Comments today:", comments_today())
+    print("Dry run:", DRY_RUN)
 
 
 def self_test():
@@ -470,8 +514,15 @@ def self_test():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--self-test", action="store_true")
+    parser.add_argument("--preflight", action="store_true")
+    parser.add_argument("--status", action="store_true")
     args = parser.parse_args()
+
     if args.self_test:
         self_test()
+    elif args.preflight:
+        preflight()
+    elif args.status:
+        local_status()
     else:
         run()
